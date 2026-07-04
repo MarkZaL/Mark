@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Overdrive: Retro Space Shooter</title>
+    <meta name="description" content="A visually stunning retro-futuristic arcade shooter game powered by HTML5 Canvas.">
+    <!-- Google Fonts for Arcade & Cyberpunk aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- CRT Effect Scanlines Overlay -->
+    <div class="crt-overlay"></div>
+
+    <div class="game-container" id="gameContainer">
+        <!-- Main Game Canvas -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Heads Up Display (HUD) -->
+        <div class="hud" id="hud" style="display: none;">
+            <div class="hud-top">
+                <div class="hud-stat">
+                    <span class="label">SCORE:</span>
+                    <span class="value" id="hudScore">000000</span>
+                </div>
+                <div class="hud-stat">
+                    <span class="label" id="hudWaveLabel">WAVE:</span>
+                    <span class="value" id="hudWave">1</span>
+                </div>
+                <div class="hud-stat">
+                    <span class="label">SCRAP:</span>
+                    <span class="value highlight" id="hudScrap">0</span>
+                </div>
+                <div class="hud-stat">
+                    <span class="label">TIME:</span>
+                    <span class="value" id="hudTimer" style="color:#fffb00; text-shadow: 0 0 8px #fffb00;">00:00</span>
+                </div>
+                <div class="hud-stat" style="font-size: 0.8rem; color: rgba(255,255,255,0.35); display: flex; gap: 8px;">
+                    <span>B:<span id="perfBullets">0</span></span>
+                    <span>P:<span id="perfParticles">0</span></span>
+                    <span>H:<span id="perfHazards">0</span></span>
+                </div>
+            </div>
+
+            <div class="hud-bottom">
+                <div class="status-bars">
+                    <!-- HP Bar -->
+                    <div class="bar-container hp">
+                        <span class="bar-label">HP</span>
+                        <div class="bar-outer">
+                            <div class="bar-inner" id="hpBar" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <!-- Shield Bar -->
+                    <div class="bar-container shield">
+                        <span class="bar-label">SHIELD</span>
+                        <div class="bar-outer">
+                            <div class="bar-inner" id="shieldBar" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hud-weapon">
+                    <span class="label">WEAPON:</span>
+                    <span class="value" id="hudWeaponName">BLASTER</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div class="screen screen-active" id="startScreen">
+            <h1 class="game-title glow-text-cyan">NEON<br><span class="glow-text-pink">OVERDRIVE</span></h1>
+            <p class="subtitle">A Synthwave Arcade Experience</p>
+            
+            <div class="instructions-panel">
+                <div class="control-row">
+                    <span class="control-key">WASD / Arrow Keys</span>
+                    <span class="control-desc">Move Ship</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-key">Mouse Aim & Left Click</span>
+                    <span class="control-desc">Shoot Weapons</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-key">Right Click / Space</span>
+                    <span class="control-desc">Dodge Dash</span>
+                </div>
+                <div class="control-row">
+                    <span class="control-key">Escape / P</span>
+                    <span class="control-desc">Pause Game</span>
+                </div>
+            </div>
+
+            <button class="btn btn-cyan btn-glow" id="startBtn">START MISSION</button>
+        </div>
+
+        <!-- Pause Screen -->
+        <div class="screen" id="pauseScreen">
+            <h2 class="glow-text-cyan">SYSTEM PAUSED</h2>
+            <div class="btn-group">
+                <button class="btn btn-cyan" id="resumeBtn">RESUME</button>
+                <button class="btn btn-pink" id="restartBtnPause">RESTART GAME</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div class="screen" id="gameOverScreen">
+            <h2 class="glow-text-pink">MISSION FAILED</h2>
+            <p class="subtitle">Your ship was obliterated</p>
+            
+            <div class="stats-panel">
+                <div class="stat-row">
+                    <span>Final Score:</span>
+                    <span class="stat-val highlight" id="finalScore">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Waves Survived:</span>
+                    <span class="stat-val highlight" id="finalWaves">0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Scrap Collected:</span>
+                    <span class="stat-val highlight" id="finalScrap">0</span>
+                </div>
+            </div>
+
+            <button class="btn btn-pink btn-glow" id="restartBtn">RESTART</button>
+        </div>
+
+        <!-- Upgrade Shop Overlay -->
+        <div class="shop-overlay" id="shopOverlay" style="display: none;">
+            <div class="shop-panel">
+                <h2 class="glow-text-cyan">UPGRADE SHOP</h2>
+                <p class="shop-sub">Spend your Energy Scrap to enhance your ship systems</p>
+                <div class="scrap-count-panel">
+                    <span>AVAILABLE SCRAP:</span>
+                    <span class="value highlight animate-pulse" id="shopScrapCount">0</span>
+                </div>
+
+                <div class="upgrades-list">
+                    <!-- Max Health Upgrade -->
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">Reinforced Hull (Max HP)</span>
+                            <span class="upgrade-desc">Increases ship health and repairs current damage.</span>
+                        </div>
+                        <div class="upgrade-action">
+                            <span class="upgrade-cost" id="hpCost">50 Scrap</span>
+                            <button class="btn btn-sm btn-cyan" id="buyHpBtn">UPGRADE</button>
+                        </div>
+                    </div>
+
+                    <!-- Shield Upgrades -->
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">Shield Recharge Matrix</span>
+                            <span class="upgrade-desc">Reduces shield regeneration delay and increases capacity.</span>
+                        </div>
+                        <div class="upgrade-action">
+                            <span class="upgrade-cost" id="shieldCost">75 Scrap</span>
+                            <button class="btn btn-sm btn-cyan" id="buyShieldBtn">UPGRADE</button>
+                        </div>
+                    </div>
+
+                    <!-- Thruster Upgrade -->
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">Sub-Light Engines (Speed)</span>
+                            <span class="upgrade-desc">Increases ship movement speed and dash distance.</span>
+                        </div>
+                        <div class="upgrade-action">
+                            <span class="upgrade-cost" id="speedCost">40 Scrap</span>
+                            <button class="btn btn-sm btn-cyan" id="buySpeedBtn">UPGRADE</button>
+                        </div>
+                    </div>
+
+                    <!-- Fire Rate Upgrade -->
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name">Overclocked Blasters (Fire Rate)</span>
+                            <span class="upgrade-desc">Reduces weapon cooldowns, increasing shooting frequency.</span>
+                        </div>
+                        <div class="upgrade-action">
+                            <span class="upgrade-cost" id="fireRateCost">60 Scrap</span>
+                            <button class="btn btn-sm btn-cyan" id="buyFireRateBtn">UPGRADE</button>
+                        </div>
+                    </div>
+
+                    <!-- Weapon Unlocks & Upgrades -->
+                    <div class="upgrade-item">
+                        <div class="upgrade-info">
+                            <span class="upgrade-name" id="weaponNameUpgrade">Plasma Shotgun</span>
+                            <span class="upgrade-desc" id="weaponDescUpgrade">Unlocks standard shotgun weapon. Wide spread, close range.</span>
+                        </div>
+                        <div class="upgrade-action">
+                            <span class="upgrade-cost" id="weaponCost">100 Scrap</span>
+                            <button class="btn btn-sm btn-pink" id="buyWeaponBtn">UNLOCK</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-outline" id="closeShopBtn">RESUME MISSION</button>
+            </div>
+        </div>
+
+        <!-- Warning Flash for Boss Spawning -->
+        <div class="warning-overlay" id="warningOverlay" style="display: none;">
+            <div class="warning-content">
+                <div class="warning-logo">⚠️</div>
+                <h2 class="warning-title glow-text-pink animate-flash">WARNING: HOSTILE CAPITAL SHIP DETECTED</h2>
+                <p class="warning-subtitle">Prepare for Boss Combat</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Script -->
+    <script src="game.js"></script>
+</body>
+</html>
